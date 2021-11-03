@@ -1,0 +1,11 @@
+[package]
+name = "cpi"
+version = "0.1.0"
+authors = ["Tony Curtis <anthony.curtis@stonybrook.edu>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+uname = "0.1.1"
+shmem = { path = "../shmem" }

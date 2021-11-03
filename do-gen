@@ -1,0 +1,35 @@
+#!/bin/bash
+
+impl="ompi-c"
+
+inc_dir="`pkg-config --variable includedir $impl`"
+flags="`pkg-config --cflags-only-I $impl`"
+
+hdr="$inc_dir/shmem.h"
+
+bindgen                                           \
+    --no-doc-comments                             \
+    --enable-function-attribute-detection         \
+    --allowlist-var '^SHMEM_.*'                   \
+    --allowlist-type '^shmem_.*'                  \
+    --allowlist-var '^_SHMEM_.*'                  \
+    --allowlist-function '^sh.*'                  \
+    --constified-enum '.*' --no-prepend-enum-name \
+    --translate-enum-integer-types                \
+    --raw-line '// these caused by bindgen'       \
+    --raw-line '#![allow(non_camel_case_types)]'  \
+    --raw-line '#![allow(improper_ctypes)]'       \
+    -o shmemlib/src/lib.rs                        \
+    $hdr                                          \
+    --                                            \
+    $flags
+
+exit $?
+
+#
+# This script generates the Rust source from the C <shmem.h> file.  It
+# pulls out constants, globals, enums etc. that need to be replicated
+# as part of the Rust-based API (./shmemlib).  Our shmem interface
+# (./shmem) then hides the nasty details of the generated bindings and
+# presents them in a Rust-safe manner to the end-programmer.
+#

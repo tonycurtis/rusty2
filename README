@@ -1,0 +1,33 @@
+This repository contains the Rust code to interface with OpenSHMEM:
+
+.
+├── add
+├── cpi
+├── enums
+├── hello
+├── hello-teams
+├── hello-threads
+├── rotput
+├── shmem
+├── shmemlib
+└── trial
+
+The top-level "do-gen" script parses an OpenSMHEM header file and
+generates dervied Rust equivalents.  Note this is pretty raw output
+and is not something that Rust programmers would want to see.
+
+The do-gen output goes into the shmemlib project.
+
+The shmem project builds on shmemlib and implements Rust code that
+hides all the unsafe operations that result from parsing the C.  Or at
+least, this is the idea, and where the work will be.
+
+The other projects (directories) are example programs to explore how
+to actually use OpenSHMEM with Rust and to see what the interface
+should look like.  Currently it is too "C-like", e.g. see rotput that
+requires unsafe operations in user code.  This should be hidden by the
+shmem library.
+
+The examples are taken from the C programs in:
+
+  https://github.com/openshmem-org/openshmem-examples
