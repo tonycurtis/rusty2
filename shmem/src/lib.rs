@@ -219,7 +219,7 @@ fn clear()
     map.clear();
 }
 
-fn show() {
+fn _show() {
     println!("{}", "=".repeat(48));
 
     let map = GM.get().lock().unwrap();
@@ -229,7 +229,7 @@ fn show() {
     }
 }
 
-fn validate_ptr<T>(ptr: *mut T, num_bytes: usize) {
+fn _validate_ptr<T>(ptr: *mut T, num_bytes: usize) {
     if ptr.is_null() {
         panic!("Found null pointer");
     }
