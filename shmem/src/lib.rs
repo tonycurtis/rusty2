@@ -11,7 +11,7 @@ use state::Storage;
 
 pub const MAJOR_VERSION: u32 = shmemlib::SHMEM_MAJOR_VERSION;
 pub const MINOR_VERSION: u32 = shmemlib::SHMEM_MINOR_VERSION;
-pub const VENDOR_STRING: &'static [u8; 9usize] = shmemlib::SHMEM_VENDOR_STRING;
+pub const VENDOR_STRING: &'static [u8; 26usize] = shmemlib::SHMEM_VENDOR_STRING;
 
 pub type ThreadLevel = i32;
 
@@ -33,19 +33,19 @@ pub type SymmMemAddr = *mut libc::c_void;
 // stop-gap
 //
 
-pub type TeamType = shmemlib::shmem_team_t;
+// pub type TeamType = shmemlib::shmem_team_t;
 
-pub fn team_world() -> TeamType {
-    unsafe { shmemlib::SHMEM_TEAM_WORLD }
-}
+// pub fn team_world() -> TeamType {
+//     unsafe { shmemlib::SHMEM_TEAM_WORLD }
+// }
 
-pub fn team_shared() -> TeamType {
-    unsafe { shmemlib::SHMEM_TEAM_SHARED }
-}
+// pub fn team_shared() -> TeamType {
+//     unsafe { shmemlib::SHMEM_TEAM_SHARED }
+// }
 
-pub fn team_invalid() -> TeamType {
-    unsafe { shmemlib::SHMEM_TEAM_INVALID }
-}
+// pub fn team_invalid() -> TeamType {
+//     unsafe { shmemlib::SHMEM_TEAM_INVALID }
+// }
 
 //
 // == initialize and finalize ============================================
@@ -110,13 +110,13 @@ pub fn n_pes() -> i32 {
     unsafe { shmemlib::shmem_n_pes() }
 }
 
-pub fn team_my_pe(t: shmemlib::shmem_team_t) -> i32 {
-    unsafe { shmemlib::shmem_team_my_pe(t) }
-}
+// pub fn team_my_pe(t: shmemlib::shmem_team_t) -> i32 {
+//     unsafe { shmemlib::shmem_team_my_pe(t) }
+// }
 
-pub fn team_n_pes(t: shmemlib::shmem_team_t) -> i32 {
-    unsafe { shmemlib::shmem_team_n_pes(t) }
-}
+// pub fn team_n_pes(t: shmemlib::shmem_team_t) -> i32 {
+//     unsafe { shmemlib::shmem_team_n_pes(t) }
+// }
 
 pub fn pe_accessible(pe: i32) -> bool {
     unsafe { shmemlib::shmem_pe_accessible(pe) == 1 }
@@ -215,7 +215,7 @@ fn clear()
 
     for key in map.keys() {
         free(*key as SymmMemAddr);
-    }  
+    }
     map.clear();
 }
 
@@ -233,7 +233,7 @@ fn validate_ptr<T>(ptr: *mut T, num_bytes: usize) {
     if ptr.is_null() {
         panic!("Found null pointer");
     }
-    
+
     if (ptr as usize) % num_bytes != 0 {
         panic!("Found unaligned pointer");
     }
@@ -251,16 +251,16 @@ impl<T> SymmMem<T> {
         insert(symm_ptr as usize, num_bytes);
         SymmMem { ptr: symm_ptr as *mut T, length: x }
     }
-    pub fn new_with_hints(x: usize, hints: u64) -> SymmMem<T> {
-        let num_bytes = x * mem::size_of::<T>() as usize;
-        let symm_ptr = malloc_with_hints(num_bytes, hints);
-        insert(symm_ptr as usize, num_bytes);
-        SymmMem { ptr: symm_ptr as *mut T, length: x }
-    }
+    // pub fn new_with_hints(x: usize, hints: u64) -> SymmMem<T> {
+    //     let num_bytes = x * mem::size_of::<T>() as usize;
+    //     let symm_ptr = malloc_with_hints(num_bytes, hints);
+    //     insert(symm_ptr as usize, num_bytes);
+    //     SymmMem { ptr: symm_ptr as *mut T, length: x }
+    // }
     pub fn set(&mut self, offset: usize, value: T) {
         if offset < self.length {
             unsafe {
-                *(self.ptr.offset((offset as isize))) = value;
+                *(self.ptr.offset(offset as isize)) = value;
             }
         }
         else {
@@ -270,17 +270,17 @@ impl<T> SymmMem<T> {
     pub fn get(&mut self, offset: usize) -> &T {
         if offset < self.length {
             unsafe {
-                return &*(self.ptr.offset((offset as isize)));
+                return &*(self.ptr.offset(offset as isize));
             }
         }
         else {
             panic!("Offset is out of bounds, offset: {}, pointer length: {}", offset, self.length);
         }
     }
-    pub fn realloc(&mut self, newLength: usize) {
-        let num_bytes = mem::size_of::<T>() * newLength;
+    pub fn realloc(&mut self, new_length: usize) {
+        let num_bytes = mem::size_of::<T>() * new_length;
         self.ptr = realloc(self.ptr as SymmMemAddr, num_bytes) as *mut T;
-        self.length = newLength;
+        self.length = new_length;
     }
 }
 
@@ -312,31 +312,31 @@ impl<T> Drop for SymmMem<T> {
 // this doesn't match the type that bindgen dumped out for us, so we
 // have to convert
 
-pub(crate) fn malloc(n: usize) -> SymmMemAddr {
+pub fn malloc(n: usize) -> SymmMemAddr {
     unsafe { shmemlib::shmem_malloc(n as u64) }
 }
 
-pub(crate) fn calloc(n: usize, s: usize) -> SymmMemAddr {
+pub fn calloc(n: usize, s: usize) -> SymmMemAddr {
     unsafe { shmemlib::shmem_calloc(n as u64, s as u64) }
 }
 
-pub(crate) fn realloc(m: SymmMemAddr, n: usize) -> SymmMemAddr {
+pub fn realloc(m: SymmMemAddr, n: usize) -> SymmMemAddr {
     unsafe { shmemlib::shmem_realloc(m, n as u64) }
 }
 
-pub(crate) fn align(a: u64, n: usize) -> SymmMemAddr {
+pub fn align(a: u64, n: usize) -> SymmMemAddr {
     unsafe { shmemlib::shmem_align(a, n as u64) }
 }
 
-pub(crate) fn free(m: SymmMemAddr) {
+pub fn free(m: SymmMemAddr) {
     unsafe {
         shmemlib::shmem_free(m);
     }
 }
 
-pub(crate) fn malloc_with_hints(n: usize, h: u64) -> SymmMemAddr {
-    unsafe { shmemlib::shmem_malloc_with_hints(n as u64, h as i64) }
-}
+// pub(crate) fn malloc_with_hints(n: usize, h: u64) -> SymmMemAddr {
+//     unsafe { shmemlib::shmem_malloc_with_hints(n as u64, h as i64) }
+// }
 
 pub fn ptr(m: SymmMemAddr, pe: i32) -> SymmMemAddr {
     unsafe { shmemlib::shmem_ptr(m, pe) }
