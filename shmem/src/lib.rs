@@ -11,7 +11,7 @@ use state::Storage;
 
 pub const MAJOR_VERSION: u32 = shmemlib::SHMEM_MAJOR_VERSION;
 pub const MINOR_VERSION: u32 = shmemlib::SHMEM_MINOR_VERSION;
-pub const VENDOR_STRING: &'static [u8; 26usize] = shmemlib::SHMEM_VENDOR_STRING;
+pub const VENDOR_STRING: &'static [u8; 25usize] = shmemlib::SHMEM_VENDOR_STRING;
 
 pub type ThreadLevel = i32;
 

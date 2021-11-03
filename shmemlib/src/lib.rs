@@ -10,11 +10,11 @@ pub struct __BindgenComplex<T> {
     pub re: T,
     pub im: T,
 }
-pub const SHMEM_HEAP_SIZE: &'static [u8; 21usize] = b"SHMEM_SYMMETRIC_SIZE\0";
+pub const SHMEM_HEAP_SIZE: &'static [u8; 26usize] = b"SHMEM_SYMMETRIC_HEAP_SIZE\0";
 pub const SHMEM_HEAP_TYPE: &'static [u8; 31usize] = b"SHMEM_SYMMETRIC_HEAP_ALLOCATOR\0";
 pub const SHMEM_MAJOR_VERSION: u32 = 1;
 pub const SHMEM_MINOR_VERSION: u32 = 4;
-pub const SHMEM_VENDOR_STRING: &'static [u8; 26usize] = b"https://www.open-mpi.org/\0";
+pub const SHMEM_VENDOR_STRING: &'static [u8; 25usize] = b"http://www.open-mpi.org/\0";
 pub const SHMEM_MAX_NAME_LEN: u32 = 256;
 pub const SHMEM_CTX_PRIVATE: u32 = 1;
 pub const SHMEM_CTX_SERIALIZED: u32 = 2;
