@@ -1,7 +1,7 @@
+use shmem;
 use std::f64::consts::PI;
 use std::mem;
 use uname::uname;
-use shmem;
 
 pub const N: i64 = 10000;
 
@@ -33,11 +33,11 @@ fn main() {
 
     // shmem::double_sum_to_all(pi, mypi, 1, 0, 0, npes);
 
-    pi.set(0, mypi * npes as f64); // fudge
+    *pi = mypi * npes as f64; // fudge
 
     shmem::barrier_all();
 
-    println!("PE {}/{} on \"{}\" pi = {}", me, npes, node, pi.get(0));
+    println!("PE {}/{} on \"{}\" pi = {}", me, npes, node, *pi);
 
     shmem::finalize();
 }

@@ -17,10 +17,11 @@ fn main() {
 
     shmem::barrier_all();
 
-    let val = dest.get(0);
+    let val = *dest;
+    shmem::barrier_all();
 
-    print!("{}: {:>6}: got {:>6}", node, me, *val);
-    if *val == me {
+    print!("{}: {:>6}: got {:>6}", node, me, val);
+    if val == me {
         println!("  CORRECT");
     } else {
         println!("  WRONG, expected {}", me);

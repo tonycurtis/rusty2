@@ -5,8 +5,7 @@ fn main() {
 
     let mut counter = shmem::SymmMem::<i32>::new(1);
 
-    counter.set(0, 0);
-    //*counter = 0;
+    *counter = 0;
 
     let me = shmem::my_pe();
 
@@ -18,7 +17,7 @@ fn main() {
 
     if me == 0 {
         let n = shmem::n_pes();
-        println!("Sum from 1 to {} = {}", n, counter.get(0));
+        println!("Sum from 1 to {} = {}", n, *counter);
     }
 
     shmem::finalize();
