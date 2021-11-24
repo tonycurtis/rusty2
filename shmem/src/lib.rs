@@ -225,12 +225,17 @@ fn _show() {
     }
 }
 
-fn _validate_ptr<T>(ptr: *mut T, num_bytes: usize) {
+fn is_aligned<T>(ptr: *mut T) -> bool {
+    use core::mem::align_of;
+    (ptr as usize) % align_of::<T>() == 0
+}
+
+fn validate_ptr<T>(ptr: *mut T) {
     if ptr.is_null() {
         panic!("Found null pointer");
     }
 
-    if (ptr as usize) % num_bytes != 0 {
+    if (!is_aligned(ptr)) {
         panic!("Found unaligned pointer");
     }
 }
@@ -259,6 +264,7 @@ impl<T> SymmMem<T> {
     pub fn set(&mut self, offset: usize, value: T) {
         if offset < self.length {
             unsafe {
+                validate_ptr(self.ptr);
                 *(self.ptr.offset(offset as isize)) = value;
             }
         } else {
@@ -271,6 +277,7 @@ impl<T> SymmMem<T> {
     pub fn get(&mut self, offset: usize) -> &T {
         if offset < self.length {
             unsafe {
+                validate_ptr(self.ptr);
                 return &*(self.ptr.offset(offset as isize));
             }
         } else {
@@ -281,6 +288,7 @@ impl<T> SymmMem<T> {
         }
     }
     pub fn realloc(&mut self, new_length: usize) {
+        validate_ptr(self.ptr);
         let num_bytes = mem::size_of::<T>() * new_length;
         self.ptr = realloc(self.ptr as SymmMemAddr, num_bytes) as *mut T;
         self.length = new_length;
@@ -291,13 +299,21 @@ impl<T> Deref for SymmMem<T> {
     type Target = T;
 
     fn deref(&self) -> &T {
-        unsafe { &*self.ptr }
+        unsafe {
+            validate_ptr(self.ptr);
+
+            &*self.ptr
+        }
     }
 }
 
 impl<T> DerefMut for SymmMem<T> {
     fn deref_mut(&mut self) -> &mut T {
-        unsafe { &mut *self.ptr }
+        unsafe {
+            validate_ptr(self.ptr);
+
+            &mut *self.ptr
+        }
     }
 }
 
@@ -307,23 +323,21 @@ impl<T> Drop for SymmMem<T> {
     }
 }
 
-/*
-
 /* Rust does not support function overloading.
  * Below example still requires same number of arguments for overloaded functions
  * Other option: https://stackoverflow.com/questions/42236166/is-it-possible-to-overload-a-function-with-different-numbers-of-arguments-using
  * Above option uses enums and From/Into traits
  */
-pub trait OffsetTrait<O, T> {
+/*pub trait OffsetTrait<O, T> {
     fn set(&mut self, offset: O, value: T);
     fn get(&mut self, offset: O) -> &T;
 }
 
 impl<T> OffsetTrait<(), T> for SymmMem<T> {
-    fn set(&mut self, _:(), value: T) {
+    fn set(&mut self, _: (), value: T) {
         self.set(0, value);
     }
-    fn get(&mut self, _:()) -> &T {
+    fn get(&mut self, _: ()) -> &T {
         self.get(0)
     }
 }
@@ -334,9 +348,11 @@ impl<T> OffsetTrait<usize, T> for SymmMem<T> {
             unsafe {
                 *(self.ptr.offset(offset as isize)) = value;
             }
-        }
-        else {
-            panic!("Offset is out of bounds, offset: {}, pointer length: {}", offset, self.length);
+        } else {
+            panic!(
+                "Offset is out of bounds, offset: {}, pointer length: {}",
+                offset, self.length
+            );
         }
     }
     fn get(&mut self, offset: usize) -> &T {
@@ -344,13 +360,14 @@ impl<T> OffsetTrait<usize, T> for SymmMem<T> {
             unsafe {
                 return &*(self.ptr.offset(offset as isize));
             }
-        }
-        else {
-            panic!("Offset is out of bounds, offset: {}, pointer length: {}", offset, self.length);
+        } else {
+            panic!(
+                "Offset is out of bounds, offset: {}, pointer length: {}",
+                offset, self.length
+            );
         }
     }
-}
-*/
+}*/
 
 // so `sizeof` gives us `usize` as the amount of memory to allocate.
 // this doesn't match the type that bindgen dumped out for us, so we
