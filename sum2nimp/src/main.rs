@@ -1,11 +1,10 @@
 use shmem::*;
-use std::mem::size_of;
 
 fn main() {
     init();
 
-    let mut counter = shmem::SymmMem::<i32>::new(1);
-        
+    let mut counter = SymmMem::<i32>::new(1);
+
     *counter = 0;
 
     barrier_all();
