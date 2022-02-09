@@ -1,11 +1,12 @@
+   
 use shmemlib;
-use state::Storage;
-use std::collections::HashMap;
+use std::string::String;
 use std::mem;
 use std::ops::Deref;
 use std::ops::DerefMut;
-use std::string::String;
+use std::collections::HashMap;
 use std::sync::Mutex;
+use state::Storage;
 
 // pass through, will have to look at parsing "pub const" decls.
 
@@ -163,7 +164,9 @@ pub fn float_put(dest: &SymmMem<f32>, src: &SymmMem<f32>, n: u64, pe: i32) {
 // etc.
 
 pub fn int_g(dest: &SymmMem<i32>, pe: i32) -> i32 {
-    unsafe { shmemlib::shmem_int_g(dest.ptr, pe) }
+    unsafe {
+        shmemlib::shmem_int_g(dest.ptr, pe)
+    }
 }
 
 pub fn int_get(dest: &SymmMem<i32>, src: &SymmMem<i32>, n: u64, pe: i32) {
@@ -200,14 +203,16 @@ fn insert(ptr: usize, num_bytes: usize) {
 fn remove(ptr: usize) {
     let mut map = GM.get().lock().unwrap();
 
-    if map.get(&ptr) != None {
+    if map.get(&ptr) != None
+    {
         map.remove(&ptr);
         free(ptr as SymmMemAddr);
     }
 }
 
-fn clear() {
-    let mut map = GM.get().lock().unwrap();
+fn clear()
+{
+   let mut map = GM.get().lock().unwrap();
 
     for key in map.keys() {
         free(*key as SymmMemAddr);
@@ -220,7 +225,7 @@ fn _show() {
 
     let map = GM.get().lock().unwrap();
 
-    for (ptr, _) in map.iter() {
+    for(ptr, _) in map.iter() {
         println!("{}", ptr);
     }
 }
@@ -242,7 +247,7 @@ fn validate_ptr<T>(ptr: *mut T) {
 
 pub struct SymmMem<T> {
     ptr: *mut T,
-    length: usize,
+    length: usize
 }
 
 impl<T> SymmMem<T> {
@@ -250,10 +255,7 @@ impl<T> SymmMem<T> {
         let num_bytes = x * mem::size_of::<T>() as usize;
         let symm_ptr = malloc(num_bytes);
         insert(symm_ptr as usize, num_bytes);
-        SymmMem {
-            ptr: symm_ptr as *mut T,
-            length: x,
-        }
+        SymmMem { ptr: symm_ptr as *mut T, length: x }
     }
     // pub fn new_with_hints(x: usize, hints: u64) -> SymmMem<T> {
     //     let num_bytes = x * mem::size_of::<T>() as usize;
@@ -267,11 +269,9 @@ impl<T> SymmMem<T> {
                 validate_ptr(self.ptr);
                 *(self.ptr.offset(offset as isize)) = value;
             }
-        } else {
-            panic!(
-                "Offset is out of bounds, offset: {}, pointer length: {}",
-                offset, self.length
-            );
+        }
+        else {
+            panic!("Offset is out of bounds, offset: {}, pointer length: {}", offset, self.length);
         }
     }
     pub fn get(&mut self, offset: usize) -> &T {
@@ -280,11 +280,9 @@ impl<T> SymmMem<T> {
                 validate_ptr(self.ptr);
                 return &*(self.ptr.offset(offset as isize));
             }
-        } else {
-            panic!(
-                "Offset is out of bounds, offset: {}, pointer length: {}",
-                offset, self.length
-            );
+        }
+        else {
+            panic!("Offset is out of bounds, offset: {}, pointer length: {}", offset, self.length);
         }
     }
     pub fn realloc(&mut self, new_length: usize) {
@@ -301,7 +299,6 @@ impl<T> Deref for SymmMem<T> {
     fn deref(&self) -> &T {
         unsafe {
             validate_ptr(self.ptr);
-
             &*self.ptr
         }
     }
@@ -311,7 +308,6 @@ impl<T> DerefMut for SymmMem<T> {
     fn deref_mut(&mut self) -> &mut T {
         unsafe {
             validate_ptr(self.ptr);
-
             &mut *self.ptr
         }
     }
@@ -322,52 +318,6 @@ impl<T> Drop for SymmMem<T> {
         remove((self.ptr as SymmMemAddr) as usize);
     }
 }
-
-/* Rust does not support function overloading.
- * Below example still requires same number of arguments for overloaded functions
- * Other option: https://stackoverflow.com/questions/42236166/is-it-possible-to-overload-a-function-with-different-numbers-of-arguments-using
- * Above option uses enums and From/Into traits
- */
-/*pub trait OffsetTrait<O, T> {
-    fn set(&mut self, offset: O, value: T);
-    fn get(&mut self, offset: O) -> &T;
-}
-
-impl<T> OffsetTrait<(), T> for SymmMem<T> {
-    fn set(&mut self, _: (), value: T) {
-        self.set(0, value);
-    }
-    fn get(&mut self, _: ()) -> &T {
-        self.get(0)
-    }
-}
-
-impl<T> OffsetTrait<usize, T> for SymmMem<T> {
-    fn set(&mut self, offset: usize, value: T) {
-        if offset < self.length {
-            unsafe {
-                *(self.ptr.offset(offset as isize)) = value;
-            }
-        } else {
-            panic!(
-                "Offset is out of bounds, offset: {}, pointer length: {}",
-                offset, self.length
-            );
-        }
-    }
-    fn get(&mut self, offset: usize) -> &T {
-        if offset < self.length {
-            unsafe {
-                return &*(self.ptr.offset(offset as isize));
-            }
-        } else {
-            panic!(
-                "Offset is out of bounds, offset: {}, pointer length: {}",
-                offset, self.length
-            );
-        }
-    }
-}*/
 
 // so `sizeof` gives us `usize` as the amount of memory to allocate.
 // this doesn't match the type that bindgen dumped out for us, so we
@@ -431,12 +381,14 @@ pub fn barrier_all() {
 
 pub fn int_atomic_add(dest: &SymmMem<i32>, val: i32, pe: i32) {
     unsafe {
-        shmemlib::shmem_int_atomic_add(dest.ptr, val, pe);
+        shmemlib::shmem_int_atomic_add(dest.ptr, val,pe);
     }
 }
 
 pub fn int_atomic_fetch_add(dest: &SymmMem<i32>, val: i32, pe: i32) -> i32 {
-    unsafe { shmemlib::shmem_int_atomic_fetch_add(dest.ptr, val, pe) }
+    unsafe {
+        shmemlib::shmem_int_atomic_fetch_add(dest.ptr, val,pe)
+    }
 }
 
 // and so on for other types
@@ -458,44 +410,36 @@ pub fn clear_lock(lk: &SymmMem<i64>) {
 }
 
 pub fn test_lock(lk: &SymmMem<i64>) -> bool {
-    unsafe { shmemlib::shmem_test_lock(lk.ptr) != 0 }
+    unsafe {
+        shmemlib::shmem_test_lock(lk.ptr) != 0
+    }
 }
 
 //
 // == collectivess =======================================================
 //
 
-pub fn int_sum_to_all(
-    target: &SymmMem<i32>,
-    source: &SymmMem<i32>,
-    nreduce: i32,
-    start: i32,
-    stride: i32,
-    size: i32,
-    pwrk: &SymmMem<i32>,
-    psync: &SymmMem<i64>,
-) {
+pub fn int_sum_to_all(target: &SymmMem<i32>, source: &SymmMem<i32>,
+                      nreduce: i32,
+                      start: i32, stride: i32, size: i32,
+                      pwrk: &SymmMem<i32>, psync: &SymmMem<i64>) {
     unsafe {
-        shmemlib::shmem_int_sum_to_all(
-            target.ptr, source.ptr, nreduce, start, stride, size, pwrk.ptr, psync.ptr,
-        );
+        shmemlib::shmem_int_sum_to_all(target.ptr, source.ptr,
+                                       nreduce,
+                                       start, stride, size,
+                                       pwrk.ptr, psync.ptr);
     }
 }
 
-pub fn double_sum_to_all(
-    target: &SymmMem<f64>,
-    source: &SymmMem<f64>,
-    nreduce: i32,
-    start: i32,
-    stride: i32,
-    size: i32,
-    pwrk: &SymmMem<f64>,
-    psync: &SymmMem<i64>,
-) {
+pub fn double_sum_to_all(target: &SymmMem<f64>, source: &SymmMem<f64>,
+                      nreduce: i32,
+                      start: i32, stride: i32, size: i32,
+                      pwrk: &SymmMem<f64>, psync: &SymmMem<i64>) {
     unsafe {
-        shmemlib::shmem_double_sum_to_all(
-            target.ptr, source.ptr, nreduce, start, stride, size, pwrk.ptr, psync.ptr,
-        );
+        shmemlib::shmem_double_sum_to_all(target.ptr, source.ptr,
+                                          nreduce,
+                                          start, stride, size,
+                                          pwrk.ptr, psync.ptr);
     }
 }
 

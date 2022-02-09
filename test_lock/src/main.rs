@@ -1,6 +1,6 @@
 use shmem;
-use std::mem;
 use uname::uname;
+use std::mem;
 extern crate getopts;
 use getopts::Options;
 use std::env;
@@ -13,10 +13,8 @@ fn main() {
     opts.optflag("t", "test", "Use test_lock instead of set_lock");
 
     let matches = match opts.parse(&args[1..]) {
-        Ok(m) => m,
-        Err(e) => {
-            panic!("{}", e.to_string())
-        }
+        Ok(m) => { m }
+        Err(e) => { panic!("{}", e.to_string()) }
     };
 
     shmem::init();
@@ -37,14 +35,11 @@ fn main() {
     //
 
     if matches.opt_present("t") {
-        if me == 0 {
-            eprintln!("Using test lock");
-        }
-        while shmem::test_lock(&lock) {}
-    } else {
-        if me == 0 {
-            eprintln!("Using set lock");
-        }
+        if me == 0 { eprintln!("Using test lock"); }
+        while shmem::test_lock(&lock) {};
+    }
+    else {
+        if me == 0 { eprintln!("Using set lock"); }
         shmem::set_lock(&lock);
     }
 

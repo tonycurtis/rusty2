@@ -12,16 +12,17 @@ fn main() {
 
     let mut dest = shmem::SymmMem::<i32>::new(1);
 
-    *dest = 6;
+    dest.set(0, 6);
 
     shmem::barrier_all();
+    
     if me == 0 {
-        shmem::int_atomic_add(&dest, 4, n - 1);
+	    shmem::int_atomic_add(&dest, 4, n - 1);
     }
 
     shmem::barrier_all();
 
-    println!("{}: PE {:>6} dest = {:>6}", node, me, *dest);
+	println!("{}: PE {:>6} dest = {:>6}", node, me, dest.get(0));
 
     shmem::finalize();
 }
