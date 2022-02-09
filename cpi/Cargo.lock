@@ -261,6 +261,7 @@ name = "shmem"
 version = "0.1.0"
 dependencies = [
  "enum_dispatch",
+ "lazy_static",
  "libc",
  "shmemlib",
  "state",
