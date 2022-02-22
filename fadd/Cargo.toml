@@ -7,3 +7,4 @@ edition = "2018"
 
 [dependencies]
 shmem = { path = "../shmem" }
+uname = "0.1.1"

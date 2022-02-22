@@ -1,28 +1,27 @@
-use shmem;
-use std::mem;
+use shmem::*;
 use uname::uname;
 
 fn main() {
     let node = uname().unwrap().nodename;
 
-    shmem::init();
+    init();
 
-    let me = shmem::my_pe();
-    let n = shmem::n_pes();
+    let me = my_pe();
+    let n = n_pes();
 
-    let mut dest = shmem::SymmMem::<i32>::new(1);
+    let mut dest = SymmMem::<i32>::new(1);
 
     dest.set(0, 6);
 
-    shmem::barrier_all();
-    
+    barrier_all();
+
     if me == 0 {
-	    shmem::int_atomic_add(&dest, 4, n - 1);
+        dest.atomic_add(4, n - 1);
     }
 
-    shmem::barrier_all();
+    barrier_all();
 
-	println!("{}: PE {:>6} dest = {:>6}", node, me, dest.get(0));
+    println!("{}: PE {:>6} dest = {:>6}", node, me, dest.get(0));
 
-    shmem::finalize();
+    finalize();
 }

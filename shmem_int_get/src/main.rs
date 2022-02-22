@@ -1,32 +1,37 @@
-use shmem;
-use std::mem;
+use shmem::*;
 use uname::uname;
 
 fn main() {
-    let node = uname().unwrap().nodename;
+    let _node = uname().unwrap().nodename;
 
-    shmem::init();
+    init();
 
-    let me = shmem::my_pe();
-    let npes = shmem::n_pes();
+    let me = my_pe();
+    let npes = n_pes();
 
     let nextpe = (me + 1) % npes;
 
-    let mut src = shmem::SymmMem::<i32>::new(4);
-    let mut dest = shmem::SymmMem::<i32>::new(4);
-    
+    let mut src = SymmMem::<i32>::new(4);
+    let mut dest = SymmMem::<i32>::new(4);
+
     for x in 0..4 {
         src.set(x as usize, x * me);
     }
 
-    shmem::barrier_all();
+    barrier_all();
 
     /* Get values from next pe */
-    shmem::int_get(&dest, &src, 4, nextpe);
+    dest.get_values(&src, 4, nextpe);
 
     for x in 0..4 {
-        println!("PE {}/{}, idx {}, value = {}", me, npes, x, dest.get(x as usize));
+        println!(
+            "PE {}/{}, idx {}, value = {}",
+            me,
+            npes,
+            x,
+            dest.get(x as usize)
+        );
     }
 
-    shmem::finalize();
+    finalize();
 }

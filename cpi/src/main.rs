@@ -1,7 +1,5 @@
-use std::f64::consts::PI;
-use std::mem;
+use shmem::*;
 use uname::uname;
-use shmem;
 
 pub const N: i64 = 10000;
 
@@ -12,11 +10,11 @@ fn f(a: f64) -> f64 {
 fn main() {
     let node = uname().unwrap().nodename;
 
-    shmem::init();
-    let me = shmem::my_pe();
-    let npes = shmem::n_pes();
+    init();
+    let me = my_pe();
+    let npes = n_pes();
 
-    let mut pi = shmem::SymmMem::<f64>::new(1);
+    let mut pi = SymmMem::<f64>::new(1);
 
     let h: f64 = 1.0 / N as f64;
     let mut sum: f64 = 0.0;
@@ -29,15 +27,15 @@ fn main() {
 
     let mypi = h * sum;
 
-    shmem::barrier_all();
+    barrier_all();
 
     // shmem::double_sum_to_all(pi, mypi, 1, 0, 0, npes);
 
     pi.set(0, mypi * npes as f64); // fudge
 
-    shmem::barrier_all();
+    barrier_all();
 
     println!("PE {}/{} on \"{}\" pi = {}", me, npes, node, pi.get(0));
 
-    shmem::finalize();
+    finalize();
 }
