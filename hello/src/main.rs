@@ -1,15 +1,15 @@
-use shmem;
+use shmem::*;
 use uname::uname;
 
 fn main() {
     let node = uname().unwrap().nodename;
 
-    shmem::init();
+    init();
 
-    let me = shmem::my_pe();
-    let n = shmem::n_pes();
+    let me = my_pe();
+    let n = n_pes();
 
     println!("{}: PE {} of {}", node, me, n);
 
-    shmem::finalize();
+    finalize();
 }

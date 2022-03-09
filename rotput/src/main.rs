@@ -1,21 +1,21 @@
-use shmem;
+use shmem::*;
 use uname::uname;
 
 fn main() {
     let node = uname().unwrap().nodename;
 
-    shmem::init();
+    init();
 
-    let me = shmem::my_pe();
-    let n = shmem::n_pes();
+    let me = my_pe();
+    let n = n_pes();
 
     let nextpe = (me + 1) % n;
 
-    let mut dest = shmem::SymmMem::<i32>::new(1);
+    let mut dest = SymmMem::<i32>::new(1);
 
-    shmem::int_p(&dest, nextpe, nextpe);
+    dest.p(nextpe, nextpe);
 
-    shmem::barrier_all();
+    barrier_all();
 
     let val = dest.get(0);
 
@@ -26,5 +26,5 @@ fn main() {
         println!("  WRONG, expected {}", me);
     }
 
-    shmem::finalize();
+    finalize();
 }

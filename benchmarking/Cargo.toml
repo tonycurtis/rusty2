@@ -1,5 +1,5 @@
 [package]
-name = "test_lock"
+name = "benchmarking"
 version = "0.1.0"
 edition = "2018"
 
@@ -8,5 +8,3 @@ edition = "2018"
 [dependencies]
 shmem = { path = "../shmem" }
 uname = "0.1.1"
-getopts = "0.2"
-

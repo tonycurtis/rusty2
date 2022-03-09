@@ -1,6 +1,5 @@
 use shmem;
 use uname::uname;
-use std::mem;
 extern crate getopts;
 use getopts::Options;
 use std::env;
@@ -21,13 +20,13 @@ fn main() {
 
     let me = shmem::my_pe();
 
-    let mut count = shmem::SymmMem::<i32>::new(1);
+    let count = shmem::SymmMem::<i32>::new(1);
 
     if me == 0 {
         eprintln!("Using dynamic lock");
     }
 
-    let lock = shmem::SymmMem::<i64>::new(1);
+    let mut lock = shmem::SymmMem::<i64>::new(1);
     *lock = 0;
 
     shmem::barrier_all();

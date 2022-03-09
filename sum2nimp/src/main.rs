@@ -14,7 +14,7 @@ fn main() {
     // add me+1 to PE 0
     let me = my_pe();
 
-    int_atomic_add(&counter, me + 1, 0);
+    counter.atomic_add(me + 1, 0);
 
     barrier_all();
 

@@ -1,27 +1,27 @@
-use shmem;
+use shmem::*;
 use std::env;
 use std::string::String;
 use uname::uname;
 
 fn decode(tl: shmem::ThreadLevel) -> String {
     let res: &str = match tl {
-        shmem::THREAD_SINGLE => "SINGLE",
-        shmem::THREAD_FUNNELED => "FUNNELED",
-        shmem::THREAD_SERIALIZED => "SERIALIZED",
-        shmem::THREAD_MULTIPLE => "MULTIPLE",
+        THREAD_SINGLE => "SINGLE",
+        THREAD_FUNNELED => "FUNNELED",
+        THREAD_SERIALIZED => "SERIALIZED",
+        THREAD_MULTIPLE => "MULTIPLE",
         _ => "unknown",
     };
 
     res.to_string()
 }
 
-fn encode(ts: &str) -> shmem::ThreadLevel {
-    let res: shmem::ThreadLevel = match ts {
-        "SINGLE" => shmem::THREAD_SINGLE,
-        "FUNNELED" => shmem::THREAD_FUNNELED,
-        "SERIALIZED" => shmem::THREAD_SERIALIZED,
-        "MULTIPLE" => shmem::THREAD_MULTIPLE,
-        _ => shmem::THREAD_SINGLE - 1,
+fn encode(ts: &str) -> ThreadLevel {
+    let res: ThreadLevel = match ts {
+        "SINGLE" => THREAD_SINGLE,
+        "FUNNELED" => THREAD_FUNNELED,
+        "SERIALIZED" => THREAD_SERIALIZED,
+        "MULTIPLE" => THREAD_MULTIPLE,
+        _ => THREAD_SINGLE - 1,
     };
 
     res
@@ -37,12 +37,12 @@ fn main() {
     if argv.len() > 1 {
         requested = encode(&argv[1]);
     } else {
-        requested = shmem::THREAD_MULTIPLE;
+        requested = THREAD_MULTIPLE;
     }
 
-    let provided: shmem::ThreadLevel = shmem::init_thread(requested);
+    let provided: ThreadLevel = init_thread(requested);
 
-    let me = shmem::my_pe();
+    let me = my_pe();
 
     if me == 0 {
         println!(
@@ -55,5 +55,5 @@ fn main() {
         );
     }
 
-    shmem::finalize();
+    finalize();
 }
