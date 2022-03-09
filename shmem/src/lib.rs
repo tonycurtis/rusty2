@@ -525,10 +525,10 @@ impl SymmMemTrait<f64> for SymmMem<f64> {
     }
 }
 
-impl SymmMem<libc::c_void> {
+/*impl SymmMem<libc::c_void> {
     pub fn putmem(&mut self, dest: &SymmMem<libc::c_void>, n: u64, pe: i32) {
         unsafe {
             shmem_putmem(dest.ptr, self.ptr, n, pe);
         }
     }
-}
+}*/
