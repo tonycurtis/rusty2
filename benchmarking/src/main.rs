@@ -2,7 +2,7 @@ use shmem::*;
 use uname::uname;
 use std::time::{Instant};
 
-/* OpenSHMEM Put Benchmarking Example
+/* OpenSHMEM Put Loop Benchmarking Example
  * * This tests speed of looping put 100x     
  */
 fn main() {
