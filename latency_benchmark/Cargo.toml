@@ -7,3 +7,6 @@ edition = "2018"
 
 [dependencies]
 shmem = { path = "../shmem" }
+
+[profile.dev]
+opt-level = 3

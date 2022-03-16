@@ -250,6 +250,10 @@ impl<T> SymmMem<T> {
         self.ptr = realloc(self.ptr as SymmMemAddr, num_bytes) as *mut T;
         self.length = new_length;
     }
+    pub fn get_ptr(&mut self) -> *mut T
+    {
+        self.ptr
+    }
 }
 
 impl<T> Deref for SymmMem<T> {
@@ -373,10 +377,11 @@ pub trait SymmMemTrait<T> {
     fn put(&mut self, dest: &SymmMem<T>, n: u64, pe: i32);
     fn p(&mut self, src: T, pe: i32);
     fn put_nbi(&mut self, dest: &SymmMem<T>, n: u64, pe: i32);
-    //fn shmem_putmem(&mut self, dest: T, len: size_t, pe: i32) {}
+    fn putmem(&mut self, _dest: &SymmMem<T>, _len: size_t, _pe: i32) {}
     fn get_values(&mut self, src: &SymmMem<T>, n: u64, pe: i32);
     fn g(&mut self, pe: i32) -> T;
     fn get_nbi(&mut self, src: &SymmMem<T>, n: u64, pe: i32);
+    fn getmem(&mut self, _src: &SymmMem<T>, _len: size_t, _pe: i32) {}
 
     /* atomics */
     fn atomic_fetch_add(&mut self, _val: T, _pe: i32) -> i32 {
@@ -387,14 +392,14 @@ pub trait SymmMemTrait<T> {
     /* collectives */
     fn sum_to_all(
         &mut self,
-        target: &SymmMem<T>,
-        nreduce: i32,
-        start: i32,
-        stride: i32,
-        size: i32,
-        pwrk: &SymmMem<T>,
-        psync: &SymmMem<i64>,
-    );
+        _target: &SymmMem<T>,
+        _nreduce: i32,
+        _start: i32,
+        _stride: i32,
+        _size: i32,
+        _pwrk: &SymmMem<T>,
+        _psync: &SymmMem<i64>,
+    ) {}
 }
 
 impl SymmMemTrait<i32> for SymmMem<i32> {
@@ -525,10 +530,37 @@ impl SymmMemTrait<f64> for SymmMem<f64> {
     }
 }
 
-/*impl SymmMem<libc::c_void> {
+impl SymmMemTrait<u8> for SymmMem<u8> {
+    /* puts and gets */
+    fn p(&mut self, src: u8, pe: i32) {
+        unsafe { shmem_char_p(self.ptr, src, pe) }
+    }
+    fn put(&mut self, dest: &SymmMem<u8>, n: u64, pe: i32) {
+        unsafe { shmem_char_put(dest.ptr, self.ptr, n, pe) }
+    }
+    fn put_nbi(&mut self, dest: &SymmMem<u8>, n: u64, pe: i32) {
+        unsafe { shmem_char_put_nbi(dest.ptr, self.ptr, n, pe) }
+    }
+    fn get_values(&mut self, src: &SymmMem<u8>, n: u64, pe: i32) {
+        unsafe { shmem_char_get(self.ptr, src.ptr, n, pe) }
+    }
+    fn g(&mut self, pe: i32) -> u8 {
+        unsafe { shmem_char_g(self.ptr, pe) }
+    }
+    fn get_nbi(&mut self, src: &SymmMem<u8>, n: u64, pe: i32) {
+        unsafe { shmem_char_get_nbi(self.ptr, src.ptr, n, pe) }
+    }
+}
+
+impl SymmMem<libc::c_void> {
     pub fn putmem(&mut self, dest: &SymmMem<libc::c_void>, n: u64, pe: i32) {
         unsafe {
             shmem_putmem(dest.ptr, self.ptr, n, pe);
         }
     }
-}*/
+    pub fn getmem(&mut self, src: &SymmMem<libc::c_void>, n: u64, pe: i32) {
+        unsafe {
+            shmem_getmem(self.ptr, src.ptr, n, pe);
+        }
+    }
+}
