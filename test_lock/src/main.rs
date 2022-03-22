@@ -1,4 +1,4 @@
-use shmem;
+use shmem::*;
 use uname::uname;
 extern crate getopts;
 use getopts::Options;
@@ -16,39 +16,37 @@ fn main() {
         Err(e) => { panic!("{}", e.to_string()) }
     };
 
-    shmem::init();
+    init();
 
-    let me = shmem::my_pe();
+    let me = my_pe();
 
-    let count = shmem::SymmMem::<i32>::new(1);
+    let mut count = SymmMem::<i32>::new(1);
 
     if me == 0 {
         eprintln!("Using dynamic lock");
     }
 
-    let mut lock = shmem::SymmMem::<i64>::new(1);
+    let mut lock = SymmMem::<i64>::new(1);
     *lock = 0;
 
-    shmem::barrier_all();
-
-    //
+    barrier_all();
 
     if matches.opt_present("t") {
         if me == 0 { eprintln!("Using test lock"); }
-        while shmem::test_lock(&lock) {};
+        while test_lock(&lock) {};
     }
     else {
         if me == 0 { eprintln!("Using set lock"); }
-        shmem::set_lock(&lock);
+        set_lock(&lock);
     }
 
-    let val = shmem::int_g(&count, 0);
+    let val = count.g(0);
 
     println!("{:>8}: {:>4}: count is {}", node, me, val);
 
-    shmem::int_p(&count, val + 1, 0);
+    count.p(val + 1, 0);
 
-    shmem::clear_lock(&lock);
+    clear_lock(&lock);
 
-    shmem::finalize();
+    finalize();
 }
