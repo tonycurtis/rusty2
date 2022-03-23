@@ -24,7 +24,7 @@ pub const THREAD_MULTIPLE: ThreadLevel = SHMEM_THREAD_MULTIPLE as ThreadLevel;
 pub const SYNC_SIZE: usize = SHMEM_SYNC_SIZE as usize;
 pub const BCAST_SYNC_SIZE: usize = SHMEM_BCAST_SYNC_SIZE as usize;
 pub const REDUCE_MIN_WRKDATA_SIZE: usize = SHMEM_REDUCE_MIN_WRKDATA_SIZE as usize;
-pub const REDUCE_SYNC_SIZE: usize = SHMEM_REDUCE_SYNC_SIZE as uszie;
+pub const REDUCE_SYNC_SIZE: usize = SHMEM_REDUCE_SYNC_SIZE as usize;
 
 pub const SYNC_VALUE: i64 = SHMEM_SYNC_VALUE as i64;
 
@@ -322,15 +322,28 @@ pub fn ptr(m: SymmMemAddr, pe: i32) -> SymmMemAddr {
 //
 
 pub fn broadcast32(
-    target: mut &SymmMem<libc::c_void>,
-    source: &SymmMem<libc::c_void>,
-    nlong: u32,
-    PE_root: i32,
-    PE_start: i32,
-    logPE_stride: i32,
-    PE_size: i32,
-    pSync: mut &SymmMem<i32>,
-);
+    target: &SymmMem<i32>,
+    source: &SymmMem<i32>,
+    nlong: u64,
+    pe_root: i32,
+    pe_start: i32,
+    log_pe_stride: i32,
+    pe_size: i32,
+    p_sync: &SymmMem<i64>,
+) {
+    unsafe {
+        shmem_broadcast32(
+            target.ptr as *mut libc::c_void,
+            source.ptr as *mut libc::c_void,
+            nlong,
+            pe_root,
+            pe_start,
+            log_pe_stride,
+            pe_size,
+            p_sync.ptr,
+        )
+    }
+}
 
 //
 // == ordering and completion ============================================
