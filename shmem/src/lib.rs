@@ -411,12 +411,18 @@ pub trait SymmMemTrait<T> {
     fn g(&mut self, pe: i32) -> T;
     fn get_nbi(&mut self, src: &SymmMem<T>, n: u64, pe: i32);
     fn getmem(&mut self, _src: &SymmMem<T>, _len: size_t, _pe: i32) {}
+    fn fadd(&mut self, value: T, pe: i32) -> i32 { return 0 }
+    fn finc(&mut self, pe: i32) -> i32 { return 0 }
+    fn add(&mut self, value: T, pe: i32) {}
+    fn inc(&mut self, pe: i32) {}
 
     /* atomics */
     fn atomic_fetch_add(&mut self, _val: T, _pe: i32) -> i32 {
         return 0;
     }
     fn atomic_add(&mut self, _val: T, _pe: i32) {}
+    fn cswap(&mut self, cond: T, value: T, pe: i32) -> i32 { return 0 };
+    fn swap(&mut self, value: T, pe: i32) -> i32 { return 0 }
 
     /* collectives */
     fn sum_to_all(
@@ -451,6 +457,22 @@ impl SymmMemTrait<i32> for SymmMem<i32> {
     fn get_nbi(&mut self, src: &SymmMem<i32>, n: u64, pe: i32) {
         unsafe { shmem_int_get_nbi(self.ptr, src.ptr, n, pe) }
     }
+    fn fadd(&mut self, value: i32, pe: i32) -> i32 {
+        unsafe { shmem_int_fadd(self.ptr, value, pe) }
+    }
+    fn finc(&mut self, pe: i32) -> i32 {
+        unsafe { shmem_int_finc(self.ptr, pe) }
+    }
+    fn add(&mut self, value: i32, pe: i32) {
+        unsafe {
+            shmem_int_add(self.ptr, value, pe);
+        }
+    }
+    fn inc(&mut self, pe: i32) {
+        unsafe {
+            shmem_int_inc(self.ptr, pe);
+        }
+    }
 
     /* atomics */
     fn atomic_fetch_add(&mut self, val: i32, pe: i32) -> i32 {
@@ -458,6 +480,16 @@ impl SymmMemTrait<i32> for SymmMem<i32> {
     }
     fn atomic_add(&mut self, val: i32, pe: i32) {
         unsafe { shmem_int_atomic_add(self.ptr, val, pe) }
+    }
+    fn shmem_cswap(&mut self, cond: T, value: T, pe: i32) -> i32 { 
+        unsafe {
+            shmem_int_cswap(self.ptr, cond, value, pe)
+        }
+    }
+    fn shmem_swap(&mut self, value: T, pe: i32) -> i32 { 
+        unsafe {
+            shmem_int_swap(self.ptr, value, pe)
+        }
     }
 
     /* collectives */
@@ -473,6 +505,65 @@ impl SymmMemTrait<i32> for SymmMem<i32> {
     ) {
         unsafe {
             shmem_int_sum_to_all(
+                target.ptr, self.ptr, nreduce, start, stride, size, pwrk.ptr, psync.ptr,
+            );
+        }
+    }
+}
+
+impl SymmMemTrait<i64> for SymmMem<i64> {
+    /* puts and gets */
+    fn p(&mut self, src: i64, pe: i32) {
+        unsafe { shmem_longlong_p(self.ptr, src, pe) }
+    }
+    fn put(&mut self, dest: &SymmMem<i64>, n: u64, pe: i32) {
+        unsafe { shmem_longlong_put(dest.ptr, self.ptr, n, pe) }
+    }
+    fn put_nbi(&mut self, dest: &SymmMem<i64>, n: u64, pe: i32) {
+        unsafe { shmem_longlong_put_nbi(dest.ptr, self.ptr, n, pe) }
+    }
+    fn get_values(&mut self, src: &SymmMem<i64>, n: u64, pe: i32) {
+        unsafe { shmem_longlong_get(self.ptr, src.ptr, n, pe) }
+    }
+    fn g(&mut self, pe: i32) -> i64 {
+        unsafe { shmem_longlong_g(self.ptr, pe) }
+    }
+    fn get_nbi(&mut self, src: &SymmMem<i64>, n: u64, pe: i32) {
+        unsafe { shmem_longlong_get_nbi(self.ptr, src.ptr, n, pe) }
+    }
+    fn fadd(&mut self, value: i64, pe: i32) -> i64 {
+        unsafe { shmem_longlong_fadd(self.ptr, value, pe) }
+    }
+    fn finc(&mut self, pe: i32) -> i64 {
+        unsafe { shmem_longlong_finc(self.ptr, pe) }
+    }
+    fn add(&mut self, value: i64, pe: i32) {
+        unsafe {
+            shmem_longlong_add(self.ptr, value, pe);
+        }
+    }
+
+    /* atomics */
+    fn atomic_fetch_add(&mut self, val: i64, pe: i32) -> i64 {
+        unsafe { shmem_longlong_atomic_fetch_add(self.ptr, val, pe) }
+    }
+    fn atomic_add(&mut self, val: i64, pe: i32) {
+        unsafe { shmem_longlong_atomic_add(self.ptr, val, pe) }
+    }
+
+    /* collectives */
+    fn sum_to_all(
+        &mut self,
+        target: &SymmMem<i64>,
+        nreduce: i32,
+        start: i32,
+        stride: i32,
+        size: i32,
+        pwrk: &SymmMem<i64>,
+        psync: &SymmMem<i64>,
+    ) {
+        unsafe {
+            shmem_longlong_sum_to_all(
                 target.ptr, self.ptr, nreduce, start, stride, size, pwrk.ptr, psync.ptr,
             );
         }

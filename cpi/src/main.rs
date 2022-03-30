@@ -1,7 +1,7 @@
 use shmem::*;
 use uname::uname;
 use std::time::{Instant};
-use std::cmp; //cmp::max
+use std::cmp; 
 use std::env;
 
 fn f(a: f64) -> f64 {
