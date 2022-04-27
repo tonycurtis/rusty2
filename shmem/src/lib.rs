@@ -411,18 +411,20 @@ pub trait SymmMemTrait<T> {
     fn g(&mut self, pe: i32) -> T;
     fn get_nbi(&mut self, src: &SymmMem<T>, n: u64, pe: i32);
     fn getmem(&mut self, _src: &SymmMem<T>, _len: size_t, _pe: i32) {}
-    fn fadd(&mut self, value: T, pe: i32) -> i32 { return 0 }
-    fn finc(&mut self, pe: i32) -> i32 { return 0 }
-    fn add(&mut self, value: T, pe: i32) {}
-    fn inc(&mut self, pe: i32) {}
+    fn fadd(&mut self, _value: T, _pe: i32) -> i32 { return 0 }
+    fn finc(&mut self, _pe: i32) -> i32 { return 0 }
+    fn add(&mut self, _value: T, _pe: i32) {}
+    fn inc(&mut self, _pe: i32) {}
+    fn fetch(&mut self, pe: i32) -> T;
+    fn set(&mut self, _value: T, _pe: i32) {}
 
     /* atomics */
     fn atomic_fetch_add(&mut self, _val: T, _pe: i32) -> i32 {
         return 0;
     }
     fn atomic_add(&mut self, _val: T, _pe: i32) {}
-    fn cswap(&mut self, cond: T, value: T, pe: i32) -> i32 { return 0 };
-    fn swap(&mut self, value: T, pe: i32) -> i32 { return 0 }
+    fn cswap(&mut self, _cond: T, _value: T, _pe: i32) -> i32 { return 0 }
+    fn swap(&mut self, _value: T, _pe: i32) -> i32 { return 0 }
 
     /* collectives */
     fn sum_to_all(
@@ -473,6 +475,16 @@ impl SymmMemTrait<i32> for SymmMem<i32> {
             shmem_int_inc(self.ptr, pe);
         }
     }
+    fn fetch(&mut self, pe: i32) -> i32 {
+        unsafe {
+            shmem_int_fetch(self.ptr, pe)
+        }
+    }
+    fn set(&mut self, value: i32, pe: i32) {
+        unsafe { 
+            shmem_int_set(self.ptr, value, pe);
+        }
+    }
 
     /* atomics */
     fn atomic_fetch_add(&mut self, val: i32, pe: i32) -> i32 {
@@ -481,12 +493,12 @@ impl SymmMemTrait<i32> for SymmMem<i32> {
     fn atomic_add(&mut self, val: i32, pe: i32) {
         unsafe { shmem_int_atomic_add(self.ptr, val, pe) }
     }
-    fn shmem_cswap(&mut self, cond: T, value: T, pe: i32) -> i32 { 
+    fn cswap(&mut self, cond: i32, value: i32, pe: i32) -> i32 { 
         unsafe {
             shmem_int_cswap(self.ptr, cond, value, pe)
         }
     }
-    fn shmem_swap(&mut self, value: T, pe: i32) -> i32 { 
+    fn swap(&mut self, value: i32, pe: i32) -> i32 { 
         unsafe {
             shmem_int_swap(self.ptr, value, pe)
         }
@@ -531,22 +543,23 @@ impl SymmMemTrait<i64> for SymmMem<i64> {
     fn get_nbi(&mut self, src: &SymmMem<i64>, n: u64, pe: i32) {
         unsafe { shmem_longlong_get_nbi(self.ptr, src.ptr, n, pe) }
     }
-    fn fadd(&mut self, value: i64, pe: i32) -> i64 {
-        unsafe { shmem_longlong_fadd(self.ptr, value, pe) }
-    }
-    fn finc(&mut self, pe: i32) -> i64 {
-        unsafe { shmem_longlong_finc(self.ptr, pe) }
-    }
     fn add(&mut self, value: i64, pe: i32) {
         unsafe {
             shmem_longlong_add(self.ptr, value, pe);
         }
     }
+    fn fetch(&mut self, pe: i32) -> i64 {
+        unsafe {
+            shmem_longlong_fetch(self.ptr, pe)
+        }
+    }
+    fn set(&mut self, value: i64, pe: i32) {
+        unsafe { 
+            shmem_longlong_set(self.ptr, value, pe);
+        }
+    }
 
     /* atomics */
-    fn atomic_fetch_add(&mut self, val: i64, pe: i32) -> i64 {
-        unsafe { shmem_longlong_atomic_fetch_add(self.ptr, val, pe) }
-    }
     fn atomic_add(&mut self, val: i64, pe: i32) {
         unsafe { shmem_longlong_atomic_add(self.ptr, val, pe) }
     }
@@ -590,6 +603,16 @@ impl SymmMemTrait<f32> for SymmMem<f32> {
     fn get_nbi(&mut self, src: &SymmMem<f32>, n: u64, pe: i32) {
         unsafe { shmem_float_get_nbi(self.ptr, src.ptr, n, pe) }
     }
+    fn fetch(&mut self, pe: i32) -> f32 {
+        unsafe {
+            shmem_float_fetch(self.ptr, pe)
+        }
+    }
+    fn set(&mut self, value: f32, pe: i32) {
+        unsafe { 
+            shmem_float_set(self.ptr, value, pe);
+        }
+    }
 
     /* collectives */
     fn sum_to_all(
@@ -630,6 +653,16 @@ impl SymmMemTrait<f64> for SymmMem<f64> {
     fn get_nbi(&mut self, src: &SymmMem<f64>, n: u64, pe: i32) {
         unsafe { shmem_double_get_nbi(self.ptr, src.ptr, n, pe) }
     }
+    fn fetch(&mut self, pe: i32) -> f64 {
+        unsafe {
+            shmem_double_fetch(self.ptr, pe)
+        }
+    }
+    fn set(&mut self, value: f64, pe: i32) {
+        unsafe { 
+            shmem_double_set(self.ptr, value, pe);
+        }
+    }
 
     /* collectives */
     fn sum_to_all(
@@ -669,6 +702,9 @@ impl SymmMemTrait<u8> for SymmMem<u8> {
     }
     fn get_nbi(&mut self, src: &SymmMem<u8>, n: u64, pe: i32) {
         unsafe { shmem_char_get_nbi(self.ptr, src.ptr, n, pe) }
+    }
+    fn fetch(&mut self, _pe: i32) -> u8 {
+        0
     }
 }
 
