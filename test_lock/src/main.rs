@@ -1,7 +1,5 @@
 use shmem::*;
 use uname::uname;
-extern crate getopts;
-use getopts::Options;
 use std::env;
 
 fn main() {
