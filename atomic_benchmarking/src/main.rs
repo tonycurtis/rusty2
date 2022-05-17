@@ -1,7 +1,6 @@
 use shmem::*;
 use rand::prelude::*;
 use std::time::{Instant};
-use std::iter::repeat;
 use std::process::exit;
 
 const OSHM_LOOP_ATOMIC: usize = 500;
@@ -16,17 +15,13 @@ struct PEvars {
 }
 
 fn print_header_local() {
-        println!("# RustySHMEM Atomic Operation Rate Test v1.0");
-        let col1_spacing = repeat(' ').take(14).collect::<String>();
-        let col2_spacing = repeat(' ').take(6).collect::<String>();
-        println!("# Operation{}Million ops/s{}Latency (us)", col1_spacing, col2_spacing);
+    println!("# RustySHMEM Atomic Operation Rate Test v1.0");
+    println!("{0: <20} | {1: <20} | {2: <20}", "# Operation", "Million ops/s", "Latency (us)");
 }
 
 fn print_operation_rate(operation: &str, rate: f32, lat: f32)
 {
-    let col1_spacing = repeat(' ').take(20).collect::<String>();
-    let col2_spacing = repeat(' ').take(14).collect::<String>();
-    println!("{}{}{}{}{}", operation, col1_spacing, rate, col2_spacing, lat);
+    println!("{0:<20} | {1:<20} | {2:<20}", operation, rate, lat);
 }
 
 /* Generates random number over integer range */ 
@@ -45,8 +40,8 @@ fn sum_operation_data(v: &PEvars, operation: &str, rate: f32, lat: f32,  psync1:
     rate_ptr.set(0, rate);
     lat_ptr.set(0, lat);
     
-    sum_rate.sum_to_all(&rate_ptr, 1, 0, 0, v.npes, &pwrk1, &psync1);
-    sum_lat.sum_to_all(&lat_ptr, 1, 0, 0, v.npes, &pwrk2, &psync2);
+    rate_ptr.sum_to_all(&sum_rate, 1, 0, 0, v.npes, &pwrk1, &psync1);
+    lat_ptr.sum_to_all(&sum_lat, 1, 0, 0, v.npes, &pwrk2, &psync2);
     if v.me == 0 {
         print_operation_rate(operation, (sum_rate.get(0))/1e6, (sum_lat.get(0))/(v.pairs as f32));
     }
@@ -59,7 +54,7 @@ fn benchmark_fadd(v: &PEvars)
     let mut buffer = SymmMem::<i32>::new(OSHM_LOOP_ATOMIC);
     /* Touch memory */
     for idx in 0usize..OSHM_LOOP_ATOMIC {
-        buffer.set(idx, drand48())
+        buffer.set(idx, drand48());
     }
     let mut psync1 = SymmMem::<i64>::new(REDUCE_SYNC_SIZE);
     let mut psync2 = SymmMem::<i64>::new(REDUCE_SYNC_SIZE);
@@ -71,15 +66,17 @@ fn benchmark_fadd(v: &PEvars)
     barrier_all();
 
     if v.me < v.pairs {
-        let value = 1;
-
+        let value = drand48();
         let now = Instant::now();
-        buffer.fadd(value, v.nxtpe);
 
-        let elapsed_time: f32 = now.elapsed().as_millis() as f32;
+        for _ in 0..OSHM_LOOP_ATOMIC {
+            buffer.fadd(value, v.nxtpe);
+            buffer.offset(1);
+        }
 
-        rate = ((OSHM_LOOP_ATOMIC as f32) * 1e6) / (elapsed_time);
-        lat = (elapsed_time) / (OSHM_LOOP_ATOMIC as f32);
+        let elapsed_time: f32 = now.elapsed().as_micros() as f32;
+        rate = ((OSHM_LOOP_ATOMIC as f32) * 1e6) / elapsed_time;
+        lat = elapsed_time / (OSHM_LOOP_ATOMIC as f32);
     }
 
     sum_operation_data(&v, "shmem_int_fadd", rate, lat, &psync1, &psync2);
@@ -105,12 +102,15 @@ fn benchmark_finc(v: &PEvars)
 
     if v.me < v.pairs {
         let now = Instant::now();
-        buffer.finc(v.nxtpe);
 
-        let elapsed_time: f32 = now.elapsed().as_millis() as f32;
+        for _ in 0..OSHM_LOOP_ATOMIC {
+            buffer.finc(v.nxtpe);
+            buffer.offset(1);
+        }
 
-        rate = ((OSHM_LOOP_ATOMIC as f32) * 1e6) / (elapsed_time);
-        lat = (elapsed_time) / (OSHM_LOOP_ATOMIC as f32);
+        let elapsed_time: f32 = now.elapsed().as_micros() as f32;
+        rate = ((OSHM_LOOP_ATOMIC as f32) * 1e6) / elapsed_time;
+        lat = elapsed_time / (OSHM_LOOP_ATOMIC as f32);
     }
 
     sum_operation_data(&v, "shmem_int_finc", rate, lat, &psync1, &psync2);
@@ -138,11 +138,14 @@ fn benchmark_add(v: &PEvars)
         let value = drand48();
         let now = Instant::now();
 
-        buffer.add(value, v.nxtpe);
+        for _ in 0..OSHM_LOOP_ATOMIC {
+            buffer.add(value, v.nxtpe);
+            buffer.offset(1);
+        }
 
-        let elapsed_time: f32 = now.elapsed().as_millis() as f32;
-        rate = ((OSHM_LOOP_ATOMIC as f32) * 1e6) / (elapsed_time);
-        lat = (elapsed_time) / (OSHM_LOOP_ATOMIC as f32);
+        let elapsed_time: f32 = now.elapsed().as_micros() as f32;
+        rate = ((OSHM_LOOP_ATOMIC as f32) * 1e6) / elapsed_time;
+        lat = elapsed_time / (OSHM_LOOP_ATOMIC as f32);
     }
 
     sum_operation_data(&v, "shmem_int_add", rate, lat, &psync1, &psync2);
@@ -169,11 +172,14 @@ fn benchmark_inc(v: &PEvars)
     if v.me < v.pairs {
         let now = Instant::now();
 
-        buffer.inc(v.nxtpe);
+        for _ in 0..OSHM_LOOP_ATOMIC {
+            buffer.inc(v.nxtpe);
+            buffer.offset(1);
+        }
 
-        let elapsed_time: f32 = now.elapsed().as_millis() as f32;
-        rate = ((OSHM_LOOP_ATOMIC as f32) * 1e6) / (elapsed_time);
-        lat = (elapsed_time) / (OSHM_LOOP_ATOMIC as f32);
+        let elapsed_time: f32 = now.elapsed().as_micros() as f32;
+        rate = ((OSHM_LOOP_ATOMIC as f32) * 1e6) / elapsed_time;
+        lat = elapsed_time / (OSHM_LOOP_ATOMIC as f32);
     }
 
     sum_operation_data(&v, "shmem_int_inc", rate, lat, &psync1, &psync2);
@@ -196,17 +202,20 @@ fn benchmark_cswap(v: &PEvars)
         psync2.set(i, SYNC_VALUE);
     }
     barrier_all();
-
+    
     if v.me < v.pairs {
         let cond = v.nxtpe;
         let value = drand48();
-
         let now = Instant::now();
-        buffer.cswap(cond, value, v.nxtpe);
-        let elapsed_time: f32 = now.elapsed().as_millis() as f32;
 
-        rate = ((OSHM_LOOP_ATOMIC as f32) * 1e6) / (elapsed_time);
-        lat = (elapsed_time) / (OSHM_LOOP_ATOMIC as f32);
+        for _ in 0..OSHM_LOOP_ATOMIC {
+            buffer.cswap(cond, value, v.nxtpe);
+            buffer.offset(1);
+        }
+
+        let elapsed_time: f32 = now.elapsed().as_micros() as f32;
+        rate = ((OSHM_LOOP_ATOMIC as f32) * 1e6) / elapsed_time;
+        lat = elapsed_time / (OSHM_LOOP_ATOMIC as f32);
     }
 
     sum_operation_data(&v, "shmem_int_cswap", rate, lat, &psync1, &psync2);
@@ -234,11 +243,14 @@ fn benchmark_swap(v: &PEvars)
         let value = drand48();
         let now = Instant::now();
 
-        buffer.swap(value, v.nxtpe);
+        for _ in 0..OSHM_LOOP_ATOMIC {
+            buffer.swap(value, v.nxtpe);
+            buffer.offset(1);
+        }
 
-        let elapsed_time: f32 = now.elapsed().as_millis() as f32;
-        rate = ((OSHM_LOOP_ATOMIC as f32) * 1e6) / (elapsed_time);
-        lat = (elapsed_time) / (OSHM_LOOP_ATOMIC as f32);
+        let elapsed_time: f32 = now.elapsed().as_micros() as f32;
+        rate = ((OSHM_LOOP_ATOMIC as f32) * 1e6) / elapsed_time;
+        lat = elapsed_time / (OSHM_LOOP_ATOMIC as f32);
     }
 
     sum_operation_data(&v, "shmem_int_swap", rate, lat, &psync1, &psync2);
@@ -266,11 +278,14 @@ fn benchmark_set(v: &PEvars)
         let value = 1;
         let now = Instant::now();
 
-        buffer.set(value, v.nxtpe);
+        for _ in 0..OSHM_LOOP_ATOMIC {
+            buffer.set_value(value, v.nxtpe);
+            buffer.offset(1);
+        }
 
-        let elapsed_time: f32 = now.elapsed().as_millis() as f32;
-        rate = ((OSHM_LOOP_ATOMIC as f32) * 1e6) / (elapsed_time);
-        lat = (elapsed_time) / (OSHM_LOOP_ATOMIC as f32);
+        let elapsed_time: f32 = now.elapsed().as_micros() as f32;
+        rate = ((OSHM_LOOP_ATOMIC as f32) * 1e6) / elapsed_time;
+        lat = elapsed_time / (OSHM_LOOP_ATOMIC as f32);
     }
 
     sum_operation_data(&v, "shmem_int_set", rate, lat, &psync1, &psync2);
@@ -296,10 +311,15 @@ fn benchmark_fetch(v: &PEvars)
 
     if v.me < v.pairs {
         let now = Instant::now();
-        buffer.fetch(v.nxtpe);
-        let elapsed_time: f32 = now.elapsed().as_millis() as f32;
-        rate = ((OSHM_LOOP_ATOMIC as f32) * 1e6) / (elapsed_time);
-        lat = (elapsed_time) / (OSHM_LOOP_ATOMIC as f32);
+
+        for _ in 0..OSHM_LOOP_ATOMIC {
+            buffer.fetch(v.nxtpe);
+            buffer.offset(1);
+        }
+
+        let elapsed_time: f32 = now.elapsed().as_micros() as f32;
+        rate = ((OSHM_LOOP_ATOMIC as f32) * 1e6) / elapsed_time;
+        lat = elapsed_time / (OSHM_LOOP_ATOMIC as f32);
     }
 
     sum_operation_data(&v, "shmem_int_fetch", rate, lat, &psync1, &psync2);
@@ -319,14 +339,14 @@ fn benchmark(v: &PEvars)
     }
 
     /* Performance with atomics */
-    benchmark_fadd(&v);
-    benchmark_finc(&v);
-    benchmark_add(&v);
     benchmark_inc(&v);
     benchmark_cswap(&v);
     benchmark_swap(&v);
 	benchmark_set(&v);
 	benchmark_fetch(&v);
+    benchmark_fadd(&v);
+    benchmark_finc(&v);
+    benchmark_add(&v);
 }
 
 /* RustySHMEM Atomics Test [Heap Mode Only]*/
