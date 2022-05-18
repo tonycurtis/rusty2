@@ -251,9 +251,10 @@ impl<T> SymmMem<T> {
         self.ptr = realloc(self.ptr as SymmMemAddr, num_bytes) as *mut T;
         self.length = new_length;
     }
-    pub fn get_ptr(&mut self) -> *mut T
-    {
-        self.ptr
+    pub fn offset(&mut self, offset: isize) {
+        unsafe {
+            self.ptr = self.ptr.offset(offset);
+        }
     }
 }
 
@@ -345,6 +346,30 @@ pub fn broadcast32(
     }
 }
 
+pub fn broadcast64(
+    target: &SymmMem<f64>,
+    source: &SymmMem<f64>,
+    nlong: u64,
+    pe_root: i32,
+    pe_start: i32,
+    log_pe_stride: i32,
+    pe_size: i32,
+    p_sync: &SymmMem<i64>,
+) {
+    unsafe {
+        shmem_broadcast64(
+            target.ptr as *mut libc::c_void,
+            source.ptr as *mut libc::c_void,
+            nlong,
+            pe_root,
+            pe_start,
+            log_pe_stride,
+            pe_size,
+            p_sync.ptr,
+        )
+    }
+}
+
 //
 // == ordering and completion ============================================
 //
@@ -416,7 +441,7 @@ pub trait SymmMemTrait<T> {
     fn add(&mut self, _value: T, _pe: i32) {}
     fn inc(&mut self, _pe: i32) {}
     fn fetch(&mut self, pe: i32) -> T;
-    fn set(&mut self, _value: T, _pe: i32) {}
+    fn set_value(&mut self, _value: T, _pe: i32) {}
 
     /* atomics */
     fn atomic_fetch_add(&mut self, _val: T, _pe: i32) -> i32 {
@@ -460,7 +485,9 @@ impl SymmMemTrait<i32> for SymmMem<i32> {
         unsafe { shmem_int_get_nbi(self.ptr, src.ptr, n, pe) }
     }
     fn fadd(&mut self, value: i32, pe: i32) -> i32 {
-        unsafe { shmem_int_fadd(self.ptr, value, pe) }
+        unsafe {
+             shmem_int_fadd(self.ptr, value, pe)
+        }
     }
     fn finc(&mut self, pe: i32) -> i32 {
         unsafe { shmem_int_finc(self.ptr, pe) }
@@ -480,7 +507,7 @@ impl SymmMemTrait<i32> for SymmMem<i32> {
             shmem_int_fetch(self.ptr, pe)
         }
     }
-    fn set(&mut self, value: i32, pe: i32) {
+    fn set_value(&mut self, value: i32, pe: i32) {
         unsafe { 
             shmem_int_set(self.ptr, value, pe);
         }
@@ -553,7 +580,7 @@ impl SymmMemTrait<i64> for SymmMem<i64> {
             shmem_longlong_fetch(self.ptr, pe)
         }
     }
-    fn set(&mut self, value: i64, pe: i32) {
+    fn set_value(&mut self, value: i64, pe: i32) {
         unsafe { 
             shmem_longlong_set(self.ptr, value, pe);
         }
@@ -608,7 +635,7 @@ impl SymmMemTrait<f32> for SymmMem<f32> {
             shmem_float_fetch(self.ptr, pe)
         }
     }
-    fn set(&mut self, value: f32, pe: i32) {
+    fn set_value(&mut self, value: f32, pe: i32) {
         unsafe { 
             shmem_float_set(self.ptr, value, pe);
         }
@@ -658,7 +685,7 @@ impl SymmMemTrait<f64> for SymmMem<f64> {
             shmem_double_fetch(self.ptr, pe)
         }
     }
-    fn set(&mut self, value: f64, pe: i32) {
+    fn set_value(&mut self, value: f64, pe: i32) {
         unsafe { 
             shmem_double_set(self.ptr, value, pe);
         }
