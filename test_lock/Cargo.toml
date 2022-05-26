@@ -9,4 +9,4 @@ edition = "2018"
 shmem = { path = "../shmem" }
 uname = "0.1.1"
 getopts = "0.2"
-
+clap = "3.1"

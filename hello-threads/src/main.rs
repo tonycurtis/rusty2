@@ -35,7 +35,7 @@ fn main() {
     let requested;
 
     if argv.len() > 1 {
-        requested = encode(&argv[1]);
+        requested = encode(&argv[1].to_uppercase());
     } else {
         requested = THREAD_MULTIPLE;
     }
