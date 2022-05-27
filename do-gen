@@ -1,5 +1,8 @@
 #!/bin/bash
 
+#
+# N.B. this is for OSHMEM in Open-MPI
+#
 impl="ompi-c"
 
 inc_dir="`pkg-config --variable includedir $impl`"
