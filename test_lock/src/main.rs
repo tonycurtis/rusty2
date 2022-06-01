@@ -1,6 +1,4 @@
-// how to get both of these "uses" done in one?
-use shmem;
-use shmem::SymmMemTrait;
+use shmem::{SymmMemTrait};
 
 use uname::uname;
 use clap::{Arg, Command};
