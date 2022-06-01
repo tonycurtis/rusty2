@@ -17,3 +17,17 @@ like.
 The examples are adapted mostly from the C programs in:
 
   https://github.com/openshmem-org/openshmem-examples
+
+
+
+Compilation Instructions
+========================
+
+To build a particular example, e.g.
+
+    $ cd hello
+    $ cargo build [--release]
+
+How to run the example depends entirely on your environment.  The
+authors typically use SLURM with the PMIx plugin, or via
+salloc/oshrun.
