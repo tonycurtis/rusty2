@@ -12,13 +12,13 @@ const HPCC_FALSE: isize = 0;
 
 fn power2_nodes_shmemrandom_access_check(
     hpcc_table: &mut SymmMem::<u64>,
-    log_table_size: isize, 
-    localtable_size: isize, 
-    global_start_my_proc: isize, 
-    log_num_procs: isize, 
-    npes: isize, 
-    me: isize, 
-    procnum_updates: isize, 
+    log_table_size: isize,
+    localtable_size: isize,
+    global_start_my_proc: isize,
+    log_num_procs: isize,
+    npes: isize,
+    me: isize,
+    procnum_updates: isize,
     num_errors: &mut SymmMem::<i64>) {
 
     let mut local_all_done: isize = HPCC_FALSE;
@@ -34,7 +34,7 @@ fn power2_nodes_shmemrandom_access_check(
     let mut local_buckets = SymmMem::<i64>::new((npes * slot_size) as usize);
     let mut global_buckets = SymmMem::<i64>::new((npes * slot_size) as usize);
 
-    barrier_all(); 
+    barrier_all();
 
     let mut send_cnt: isize = procnum_updates;
     let mut rng = rand::thread_rng();
@@ -96,9 +96,9 @@ fn power2_nodes_shmemrandom_access_check(
                     hpcc_table.set((tmp_ran & ((localtable_size-1) as i64)) as usize, hpcc_table_value);
                 }
                 local_all_done &= pe_check_done.get(i as usize);
-            } 
+            }
         }
-    } 
+    }
 
 
     let mut errors = 0;
@@ -112,10 +112,10 @@ fn power2_nodes_shmemrandom_access_check(
 
 fn power2_nodes_random_access_update(
     hpcc_table: &mut SymmMem::<u64>,
-    log_table_size: isize, 
-    localtable_size: isize, 
+    log_table_size: isize,
+    localtable_size: isize,
     log_num_procs: isize,
-    npes: isize, 
+    npes: isize,
     procnum_updates: isize)
 {
     let mut rng = rand::thread_rng();
@@ -124,7 +124,7 @@ fn power2_nodes_random_access_update(
     let log_table_local: isize = log_table_size - log_num_procs;
     let nlocalm1: isize = localtable_size - 1;
     let mut count = SymmMem::<i64>::new(1);
-  
+
     let mut updates = SymmMem::<i64>::new(MAXTHREADS as usize);
     for j in 0..MAXTHREADS {
         updates.set(j as usize, 0);
@@ -147,7 +147,7 @@ fn power2_nodes_random_access_update(
             updates.set(i as usize, 0);
         }
     }
-  
+
     barrier_all();
 }
 
@@ -155,7 +155,7 @@ fn main() {
     init();
 
     let me: isize = my_pe() as isize;
-    let npes: isize = n_pes() as isize; 
+    let npes: isize = n_pes() as isize;
 
     /* Initialize Collective Operation Parameters */
     let mut llp_sync = SymmMem::<i64>::new(BCAST_SYNC_SIZE);
@@ -188,7 +188,7 @@ fn main() {
         min_localtable_size = table_size / npes;
         _localtable_size = min_localtable_size;
         global_start_my_proc = min_localtable_size * me;
-    } 
+    }
     else {
         if me == 0 {
             println!("Number of processes must be a power of 2");
@@ -223,7 +223,7 @@ fn main() {
     barrier_all();
 
     let mut now = Instant::now();
-    
+
     power2_nodes_random_access_update(&mut hpcc_table, log_table_size, _localtable_size, log_num_procs, npes, procnum_updates);
 
     barrier_all();
@@ -249,12 +249,12 @@ fn main() {
     let mut num_errors = SymmMem::<i64>::new(1);
     let mut glb_num_errors = SymmMem::<i64>::new(1);
 
-    power2_nodes_shmemrandom_access_check(&mut hpcc_table, log_table_size, _localtable_size, global_start_my_proc, log_num_procs, npes, me, 
+    power2_nodes_shmemrandom_access_check(&mut hpcc_table, log_table_size, _localtable_size, global_start_my_proc, log_num_procs, npes, me,
         procnum_updates, &mut num_errors);
 
-    barrier_all(); 
+    barrier_all();
     glb_num_errors.sum_to_all(&num_errors, 1, 0, 0, npes as i32, &llp_wrk, &llp_sync);
-    barrier_all(); 
+    barrier_all();
 
     /* End timed section */
     elapsed_time = now.elapsed().as_secs() as f32;
